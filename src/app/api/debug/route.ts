@@ -13,11 +13,11 @@ export async function GET() {
       userCount,
       users,
       env: {
-        hasDbUrl: !!process.env.DATABASE_URL,
+        dbUrlStart: process.env.DATABASE_URL?.substring(0, 30) + "...",
+        dbUrlEnd: "..." + process.env.DATABASE_URL?.slice(-30),
         hasDirectUrl: !!process.env.DIRECT_URL,
         hasAuthSecret: !!process.env.AUTH_SECRET,
         hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET,
-        hasNextAuthUrl: !!process.env.NEXTAUTH_URL,
       },
     });
   } catch (error: any) {
