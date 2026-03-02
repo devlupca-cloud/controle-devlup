@@ -73,7 +73,7 @@ export function ProjectForm({ project, onSuccess }: ProjectFormProps) {
           { value: "RECORRENTE", label: "Recorrente" },
         ]}
         value={type}
-        onChange={(e) => setType(e.target.value)}
+        onChange={(e) => setType(e.target.value as "AVULSO" | "RECORRENTE")}
         required
       />
       {project && (
