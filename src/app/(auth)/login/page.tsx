@@ -23,12 +23,13 @@ export default function LoginPage() {
       redirect: false,
     });
 
-    if (result?.error) {
-      setError("Email ou senha inválidos");
+    console.log("[LOGIN] signIn result:", JSON.stringify(result));
+
+    if (result?.error || !result?.ok) {
+      setError(`Email ou senha inválidos (${result?.error || "unknown"})`);
       setLoading(false);
     } else {
-      router.push("/dashboard");
-      router.refresh();
+      window.location.href = "/dashboard";
     }
   }
 
