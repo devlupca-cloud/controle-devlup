@@ -104,7 +104,7 @@ export default async function FinanceiroPage() {
       </div>
 
       {/* Quick links */}
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Link
           href="/financeiro/receitas"
           className="rounded-xl border border-border p-4 hover:bg-muted/50 transition-colors"
@@ -125,6 +125,13 @@ export default async function FinanceiroPage() {
         >
           <p className="font-medium">Relatórios</p>
           <p className="text-xs text-muted-foreground">Análises por período</p>
+        </Link>
+        <Link
+          href="/financeiro/projecao"
+          className="rounded-xl border border-purple-500/30 p-4 hover:bg-purple-500/5 transition-colors"
+        >
+          <p className="font-medium text-purple-400">Projeção</p>
+          <p className="text-xs text-muted-foreground">Cenários com pipeline</p>
         </Link>
       </div>
     </div>

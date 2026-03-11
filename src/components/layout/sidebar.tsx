@@ -8,6 +8,7 @@ import {
   FolderKanban,
   DollarSign,
   Receipt,
+  Target,
   LogOut,
   Menu,
   X,
@@ -22,6 +23,7 @@ const navItems = [
   { href: "/projetos", label: "Projetos", icon: FolderKanban },
   { href: "/financeiro", label: "Financeiro", icon: DollarSign },
   { href: "/financeiro/despesas", label: "Despesas", icon: Receipt },
+  { href: "/financeiro/projecao", label: "Projeção", icon: Target },
 ];
 
 interface SidebarProps {
