@@ -3,11 +3,11 @@
 import { prisma } from "@/lib/prisma";
 
 export async function getProjectionData() {
-  // Confirmed revenue: projects ATIVO with PENDENTE installments/recurring
+  // Confirmed revenue: projects ATIVO with PENDENTE or PAGO installments/recurring
   const [confirmedInstallments, confirmedRecurring] = await Promise.all([
     prisma.installment.findMany({
       where: {
-        status: "PENDENTE",
+        status: { in: ["PENDENTE", "PAGO"] },
         project: { status: "ATIVO" },
       },
       include: { project: { include: { client: true } } },
@@ -15,7 +15,7 @@ export async function getProjectionData() {
     }),
     prisma.recurringCharge.findMany({
       where: {
-        status: "PENDENTE",
+        status: { in: ["PENDENTE", "PAGO"] },
         project: { status: "ATIVO" },
       },
       include: { project: { include: { client: true } } },
@@ -43,7 +43,7 @@ export async function getProjectionData() {
 
   // Build monthly projection (next 6 months)
   const now = new Date();
-  const months: { month: string; confirmado: number; potencial: number }[] = [];
+  const months: { month: string; recebido: number; aReceber: number; potencial: number }[] = [];
 
   // Pre-calculate pipeline monthly distribution
   // Projects without installments: distribute totalValue evenly over 5 months starting now
@@ -78,23 +78,27 @@ export async function getProjectionData() {
       year: "2-digit",
     });
 
-    const confirmed =
-      confirmedInstallments
-        .filter((inst) => {
-          const d = new Date(inst.dueDate);
-          return d >= mDate && d <= mEnd;
-        })
-        .reduce((s, inst) => s + Number(inst.value), 0) +
-      confirmedRecurring
-        .filter((rc) => {
-          const d = new Date(rc.dueDate);
-          return d >= mDate && d <= mEnd;
-        })
-        .reduce((s, rc) => s + Number(rc.value), 0);
+    const monthInstallments = confirmedInstallments.filter((inst) => {
+      const d = new Date(inst.dueDate);
+      return d >= mDate && d <= mEnd;
+    });
+    const monthRecurring = confirmedRecurring.filter((rc) => {
+      const d = new Date(rc.dueDate);
+      return d >= mDate && d <= mEnd;
+    });
+
+    const recebido =
+      monthInstallments.filter((i) => i.status === "PAGO").reduce((s, i) => s + Number(i.value), 0) +
+      monthRecurring.filter((r) => r.status === "PAGO").reduce((s, r) => s + Number(r.value), 0);
+
+    const aReceber =
+      monthInstallments.filter((i) => i.status === "PENDENTE").reduce((s, i) => s + Number(i.value), 0) +
+      monthRecurring.filter((r) => r.status === "PENDENTE").reduce((s, r) => s + Number(r.value), 0);
 
     months.push({
       month: monthLabel,
-      confirmado: confirmed,
+      recebido,
+      aReceber,
       potencial: pipelineMonthly[monthKey] || 0,
     });
   }

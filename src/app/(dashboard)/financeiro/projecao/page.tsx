@@ -78,7 +78,8 @@ export default async function ProjecaoPage() {
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {data.months.map((m) => {
-            const total = m.confirmado + m.potencial;
+            const confirmado = m.recebido + m.aReceber;
+            const total = confirmado + m.potencial;
             return (
               <div
                 key={m.month}
@@ -87,22 +88,28 @@ export default async function ProjecaoPage() {
                 <p className="text-sm font-medium capitalize">{m.month}</p>
 
                 <div className="mt-2 space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Confirmado</span>
-                    <span className="font-medium text-success">{formatCurrency(m.confirmado)}</span>
-                  </div>
+                  {m.recebido > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Recebido</span>
+                      <span className="font-medium text-success">{formatCurrency(m.recebido)}</span>
+                    </div>
+                  )}
+                  {m.aReceber > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">A receber</span>
+                      <span className="font-medium text-warning">{formatCurrency(m.aReceber)}</span>
+                    </div>
+                  )}
                   {m.potencial > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Pipeline</span>
                       <span className="font-medium text-purple-400">{formatCurrency(m.potencial)}</span>
                     </div>
                   )}
-                  {m.potencial > 0 && (
-                    <div className="flex justify-between text-sm border-t border-border pt-1">
-                      <span className="text-muted-foreground">Total</span>
-                      <span className="font-bold text-cyan-400">{formatCurrency(total)}</span>
-                    </div>
-                  )}
+                  <div className="flex justify-between text-sm border-t border-border pt-1">
+                    <span className="text-muted-foreground">Total</span>
+                    <span className="font-bold text-cyan-400">{formatCurrency(total)}</span>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-1 mt-2 pt-2 border-t border-border">
