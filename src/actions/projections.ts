@@ -26,7 +26,7 @@ export async function getProjectionData() {
   // Pipeline: projects in COTACAO or NEGOCIACAO
   const pipelineProjects = await prisma.project.findMany({
     where: { status: { in: ["COTACAO", "NEGOCIACAO"] } },
-    include: { client: true },
+    include: { client: true, installments: { orderBy: { dueDate: "asc" } } },
     orderBy: { createdAt: "desc" },
   });
 
@@ -42,24 +42,50 @@ export async function getProjectionData() {
   );
 
   // Build monthly projection (next 6 months)
-  const months: { month: string; confirmado: number; potencial: number }[] = [];
   const now = new Date();
+  const months: { month: string; confirmado: number; potencial: number }[] = [];
+
+  // Pre-calculate pipeline monthly distribution
+  // Projects without installments: distribute totalValue evenly over 5 months starting now
+  const pipelineMonthly: Record<string, number> = {};
+  for (const project of pipelineProjects) {
+    if (project.installments.length > 0) {
+      // Has installments, use actual dates
+      for (const inst of project.installments) {
+        const d = new Date(inst.dueDate);
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        pipelineMonthly[key] = (pipelineMonthly[key] || 0) + Number(inst.value);
+      }
+    } else if (project.totalValue) {
+      // No installments, distribute over estimated months
+      const total = Number(project.totalValue);
+      const numParcelas = project.estimatedInstallments || 1;
+      const valorParcela = total / numParcelas;
+      for (let i = 0; i < numParcelas; i++) {
+        const mDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        const key = `${mDate.getFullYear()}-${mDate.getMonth()}`;
+        pipelineMonthly[key] = (pipelineMonthly[key] || 0) + valorParcela;
+      }
+    }
+  }
 
   for (let i = 0; i < 6; i++) {
     const mDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
     const mEnd = new Date(now.getFullYear(), now.getMonth() + i + 1, 0);
+    const monthKey = `${mDate.getFullYear()}-${mDate.getMonth()}`;
     const monthLabel = mDate.toLocaleDateString("pt-BR", {
       month: "short",
       year: "2-digit",
     });
 
-    const confirmed = confirmedInstallments
-      .filter((inst) => {
-        const d = new Date(inst.dueDate);
-        return d >= mDate && d <= mEnd;
-      })
-      .reduce((s, inst) => s + Number(inst.value), 0)
-      + confirmedRecurring
+    const confirmed =
+      confirmedInstallments
+        .filter((inst) => {
+          const d = new Date(inst.dueDate);
+          return d >= mDate && d <= mEnd;
+        })
+        .reduce((s, inst) => s + Number(inst.value), 0) +
+      confirmedRecurring
         .filter((rc) => {
           const d = new Date(rc.dueDate);
           return d >= mDate && d <= mEnd;
@@ -69,7 +95,7 @@ export async function getProjectionData() {
     months.push({
       month: monthLabel,
       confirmado: confirmed,
-      potencial: 0,
+      potencial: pipelineMonthly[monthKey] || 0,
     });
   }
 
@@ -78,8 +104,6 @@ export async function getProjectionData() {
     pipelineTotal,
     projectedTotal: confirmedTotal + pipelineTotal,
     pipelineProjects,
-    confirmedInstallments,
-    confirmedRecurring,
     months,
   };
 }

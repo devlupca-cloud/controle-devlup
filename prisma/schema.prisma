@@ -57,8 +57,9 @@ model Project {
   description String?
   startDate   DateTime?
   endDate     DateTime?
-  totalValue  Decimal?      @db.Decimal(12, 2)
-  createdAt   DateTime      @default(now())
+  totalValue            Decimal?      @db.Decimal(12, 2)
+  estimatedInstallments Int?
+  createdAt             DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
   client           Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)

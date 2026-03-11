@@ -20,13 +20,17 @@ export function ProjectForm({ project, onSuccess }: ProjectFormProps) {
   const [clients, setClients] = useState<Client[]>([]);
   const [type, setType] = useState(project?.type || "AVULSO");
   const [totalValue, setTotalValue] = useState(project?.totalValue ? String(project.totalValue) : "");
-  const [numInstallments, setNumInstallments] = useState("1");
+  const [status, setStatus] = useState<string>(project?.status || "COTACAO");
+  const [numInstallments, setNumInstallments] = useState(
+    project?.estimatedInstallments ? String(project.estimatedInstallments) : "1"
+  );
 
   useEffect(() => {
     getClients().then((data) => setClients(data));
   }, []);
 
-  const showInstallments = !project && type === "AVULSO" && totalValue !== "";
+  const isPipeline = status === "COTACAO" || status === "NEGOCIACAO";
+  const showInstallments = type === "AVULSO" && totalValue !== "";
   const installmentValue = totalValue && numInstallments
     ? (Number(totalValue) / (Number(numInstallments) || 1)).toFixed(2).replace(".", ",")
     : null;
@@ -88,7 +92,8 @@ export function ProjectForm({ project, onSuccess }: ProjectFormProps) {
           { value: "CONCLUIDO", label: "Concluído" },
           { value: "CANCELADO", label: "Cancelado" },
         ]}
-        defaultValue={project?.status || "COTACAO"}
+        value={status}
+        onChange={(e) => setStatus(e.target.value)}
       />
       <Textarea id="proj-description" name="description" label="Descrição" defaultValue={project?.description || ""} />
       <div className="grid grid-cols-2 gap-4">
@@ -121,7 +126,7 @@ export function ProjectForm({ project, onSuccess }: ProjectFormProps) {
       {showInstallments && (
         <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
           <p className="text-sm font-medium text-primary">Parcelas</p>
-          <div className="grid grid-cols-2 gap-4">
+          <div className={isPipeline ? "" : "grid grid-cols-2 gap-4"}>
             <Input
               id="numberOfInstallments"
               name="numberOfInstallments"
@@ -132,12 +137,14 @@ export function ProjectForm({ project, onSuccess }: ProjectFormProps) {
               value={numInstallments}
               onChange={(e) => setNumInstallments(e.target.value)}
             />
-            <Input
-              id="installmentStartDate"
-              name="installmentStartDate"
-              label="1º Vencimento"
-              type="date"
-            />
+            {!isPipeline && (
+              <Input
+                id="installmentStartDate"
+                name="installmentStartDate"
+                label="1º Vencimento"
+                type="date"
+              />
+            )}
           </div>
           {installmentValue && (
             <p className="text-xs text-muted-foreground">

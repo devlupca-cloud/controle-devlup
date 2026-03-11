@@ -72,6 +72,7 @@ export async function createProject(formData: FormData) {
 
   const numberOfInstallments = formData.get("numberOfInstallments");
   const installmentStartDate = formData.get("installmentStartDate");
+  const numInst = numberOfInstallments ? Number(numberOfInstallments) : null;
 
   const project = await prisma.project.create({
     data: {
@@ -83,6 +84,7 @@ export async function createProject(formData: FormData) {
       startDate: data.startDate ? new Date(data.startDate) : undefined,
       endDate: data.endDate ? new Date(data.endDate) : undefined,
       totalValue: data.totalValue ? new Prisma.Decimal(data.totalValue) : undefined,
+      estimatedInstallments: numInst && numInst > 0 ? numInst : undefined,
     },
   });
 
@@ -90,15 +92,15 @@ export async function createProject(formData: FormData) {
   if (
     data.type === "AVULSO" &&
     data.totalValue &&
-    numberOfInstallments &&
+    numInst &&
+    numInst > 0 &&
     installmentStartDate
   ) {
     const { addMonths } = await import("date-fns");
-    const numInst = Number(numberOfInstallments);
     const totalVal = Number(data.totalValue);
     const start = new Date(installmentStartDate as string);
 
-    if (numInst > 0 && totalVal > 0) {
+    if (totalVal > 0) {
       const installmentValue = totalVal / numInst;
       const installments = Array.from({ length: numInst }, (_, i) => ({
         projectId: project.id,
@@ -130,6 +132,20 @@ export async function updateProject(id: string, formData: FormData) {
     totalValue: formData.get("totalValue") || undefined,
   });
 
+  const numInstUpdate = formData.get("numberOfInstallments");
+  const estimatedInstallments = numInstUpdate ? Number(numInstUpdate) : null;
+  const installmentStartDate = formData.get("installmentStartDate");
+
+  // Check if transitioning from pipeline to active
+  const currentProject = await prisma.project.findUnique({
+    where: { id },
+    select: { status: true, installments: { select: { id: true } } },
+  });
+  const wasInPipeline =
+    currentProject?.status === "COTACAO" || currentProject?.status === "NEGOCIACAO";
+  const isNowActive = data.status === "ATIVO";
+  const hasNoInstallments = currentProject?.installments.length === 0;
+
   await prisma.project.update({
     where: { id },
     data: {
@@ -141,8 +157,38 @@ export async function updateProject(id: string, formData: FormData) {
       startDate: data.startDate ? new Date(data.startDate) : null,
       endDate: data.endDate ? new Date(data.endDate) : null,
       totalValue: data.totalValue ? new Prisma.Decimal(data.totalValue) : null,
+      estimatedInstallments: estimatedInstallments && estimatedInstallments > 0 ? estimatedInstallments : null,
     },
   });
+
+  // Auto-generate installments when activating from pipeline
+  if (
+    wasInPipeline &&
+    isNowActive &&
+    hasNoInstallments &&
+    data.type === "AVULSO" &&
+    data.totalValue
+  ) {
+    const numInst = estimatedInstallments || (currentProject ? (await prisma.project.findUnique({ where: { id }, select: { estimatedInstallments: true } }))?.estimatedInstallments : null) || 1;
+    const totalVal = Number(data.totalValue);
+    const { addMonths } = await import("date-fns");
+    const start = installmentStartDate
+      ? new Date(installmentStartDate as string)
+      : new Date();
+
+    if (numInst > 0 && totalVal > 0) {
+      const installmentValue = totalVal / numInst;
+      const installments = Array.from({ length: numInst }, (_, i) => ({
+        projectId: id,
+        number: i + 1,
+        value: new Prisma.Decimal(installmentValue.toFixed(2)),
+        dueDate: addMonths(start, i),
+        status: "PENDENTE" as const,
+      }));
+
+      await prisma.installment.createMany({ data: installments });
+    }
+  }
 
   revalidatePath(`/projetos/${id}`);
   revalidatePath("/projetos");

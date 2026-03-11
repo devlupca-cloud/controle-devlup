@@ -9,8 +9,8 @@ import {
   Target,
   DollarSign,
   Layers,
+  Users,
 } from "lucide-react";
-import type { ProjectStatus } from "@prisma/client";
 
 export default async function ProjecaoPage() {
   const data = await getProjectionData();
@@ -20,6 +20,7 @@ export default async function ProjecaoPage() {
       title: "Receita Confirmada",
       subtitle: "Parcelas pendentes de projetos ativos",
       value: formatCurrency(data.confirmedTotal),
+      perSocio: formatCurrency(data.confirmedTotal / 2),
       icon: DollarSign,
       color: "text-success",
     },
@@ -27,6 +28,7 @@ export default async function ProjecaoPage() {
       title: "Pipeline (Potencial)",
       subtitle: "Projetos em cotacao/negociacao",
       value: formatCurrency(data.pipelineTotal),
+      perSocio: formatCurrency(data.pipelineTotal / 2),
       icon: Target,
       color: "text-purple-400",
     },
@@ -34,6 +36,7 @@ export default async function ProjecaoPage() {
       title: "Projecao Total",
       subtitle: "Se fechar tudo",
       value: formatCurrency(data.projectedTotal),
+      perSocio: formatCurrency(data.projectedTotal / 2),
       icon: TrendingUp,
       color: "text-cyan-400",
     },
@@ -54,6 +57,12 @@ export default async function ProjecaoPage() {
             <p className={`text-2xl font-bold mt-1 ${card.color}`}>
               {card.value}
             </p>
+            <div className="flex items-center gap-1 mt-1">
+              <Users className="h-3 w-3 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">
+                Por socio: <span className="font-medium text-secondary">{card.perSocio}</span>
+              </p>
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
               {card.subtitle}
             </p>
@@ -65,20 +74,46 @@ export default async function ProjecaoPage() {
       <Card className="mb-6">
         <div className="flex items-center gap-2 mb-4">
           <Layers className="h-5 w-5 text-secondary" />
-          <CardTitle>Receita Confirmada por Mes</CardTitle>
+          <CardTitle>Projecao Mensal</CardTitle>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {data.months.map((m) => (
-            <div
-              key={m.month}
-              className="rounded-lg border border-border p-4"
-            >
-              <p className="text-sm font-medium capitalize">{m.month}</p>
-              <p className="text-lg font-bold text-success mt-1">
-                {formatCurrency(m.confirmado)}
-              </p>
-            </div>
-          ))}
+          {data.months.map((m) => {
+            const total = m.confirmado + m.potencial;
+            return (
+              <div
+                key={m.month}
+                className="rounded-lg border border-border p-4"
+              >
+                <p className="text-sm font-medium capitalize">{m.month}</p>
+
+                <div className="mt-2 space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Confirmado</span>
+                    <span className="font-medium text-success">{formatCurrency(m.confirmado)}</span>
+                  </div>
+                  {m.potencial > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Pipeline</span>
+                      <span className="font-medium text-purple-400">{formatCurrency(m.potencial)}</span>
+                    </div>
+                  )}
+                  {m.potencial > 0 && (
+                    <div className="flex justify-between text-sm border-t border-border pt-1">
+                      <span className="text-muted-foreground">Total</span>
+                      <span className="font-bold text-cyan-400">{formatCurrency(total)}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1 mt-2 pt-2 border-t border-border">
+                  <Users className="h-3 w-3 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">
+                    Por socio: <span className="font-medium text-secondary">{formatCurrency(total / 2)}</span>
+                  </p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </Card>
 
