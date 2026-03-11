@@ -76,20 +76,20 @@ export function ProjectForm({ project, onSuccess }: ProjectFormProps) {
         onChange={(e) => setType(e.target.value as "AVULSO" | "RECORRENTE")}
         required
       />
-      {project && (
-        <Select
-          id="status"
-          name="status"
-          label="Status"
-          options={[
-            { value: "ATIVO", label: "Ativo" },
-            { value: "PAUSADO", label: "Pausado" },
-            { value: "CONCLUIDO", label: "Concluído" },
-            { value: "CANCELADO", label: "Cancelado" },
-          ]}
-          defaultValue={project.status}
-        />
-      )}
+      <Select
+        id="status"
+        name="status"
+        label="Status"
+        options={[
+          { value: "COTACAO", label: "Cotação" },
+          { value: "NEGOCIACAO", label: "Negociação" },
+          { value: "ATIVO", label: "Ativo" },
+          { value: "PAUSADO", label: "Pausado" },
+          { value: "CONCLUIDO", label: "Concluído" },
+          { value: "CANCELADO", label: "Cancelado" },
+        ]}
+        defaultValue={project?.status || "COTACAO"}
+      />
       <Textarea id="proj-description" name="description" label="Descrição" defaultValue={project?.description || ""} />
       <div className="grid grid-cols-2 gap-4">
         <Input

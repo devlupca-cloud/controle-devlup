@@ -40,6 +40,8 @@ enum ProjectType {
 }
 
 enum ProjectStatus {
+  COTACAO
+  NEGOCIACAO
   ATIVO
   PAUSADO
   CONCLUIDO
@@ -51,7 +53,7 @@ model Project {
   name        String
   clientId    String
   type        ProjectType
-  status      ProjectStatus @default(ATIVO)
+  status      ProjectStatus @default(COTACAO)
   description String?
   startDate   DateTime?
   endDate     DateTime?

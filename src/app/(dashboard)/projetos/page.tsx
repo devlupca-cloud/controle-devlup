@@ -91,6 +91,8 @@ export default function ProjetosPage() {
         </div>
         <Select
           options={[
+            { value: "COTACAO", label: "Cotação" },
+            { value: "NEGOCIACAO", label: "Negociação" },
             { value: "ATIVO", label: "Ativo" },
             { value: "PAUSADO", label: "Pausado" },
             { value: "CONCLUIDO", label: "Concluído" },

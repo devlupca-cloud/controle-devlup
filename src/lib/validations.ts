@@ -18,7 +18,7 @@ export const projectSchema = z.object({
   name: z.string().min(1, "Nome obrigatório"),
   clientId: z.string().min(1, "Cliente obrigatório"),
   type: z.enum(["AVULSO", "RECORRENTE"]),
-  status: z.enum(["ATIVO", "PAUSADO", "CONCLUIDO", "CANCELADO"]).default("ATIVO"),
+  status: z.enum(["COTACAO", "NEGOCIACAO", "ATIVO", "PAUSADO", "CONCLUIDO", "CANCELADO"]).default("COTACAO"),
   description: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),

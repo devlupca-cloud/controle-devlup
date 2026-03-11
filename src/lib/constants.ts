@@ -4,6 +4,8 @@ export const PROJECT_TYPES = {
 } as const;
 
 export const PROJECT_STATUSES = {
+  COTACAO: "Cotação",
+  NEGOCIACAO: "Negociação",
   ATIVO: "Ativo",
   PAUSADO: "Pausado",
   CONCLUIDO: "Concluído",
@@ -37,6 +39,8 @@ export const PRIORITY_COLORS = {
 } as const;
 
 export const STATUS_COLORS = {
+  COTACAO: "bg-purple-500/20 text-purple-400",
+  NEGOCIACAO: "bg-cyan-500/20 text-cyan-400",
   ATIVO: "bg-green-500/20 text-green-400",
   PAUSADO: "bg-yellow-500/20 text-yellow-400",
   CONCLUIDO: "bg-blue-500/20 text-blue-400",
